@@ -26,6 +26,17 @@ def test_emoji_and_year_dropped():
     assert "2016" in delta.dropped
 
 
+def test_gazetteer_places_and_orgs():
+    tel_aviv = enrich("Tel Aviv")
+    assert tel_aviv.names == []                       # place, not a person name
+    assert any(c["kind"] == "place" for c in tel_aviv.context)
+    assert enrich("Makers").type == "org"
+    # a place must not merge with a phonetically-similar person name
+    assert score(enrich("Tel Aviv"), enrich("טל הלוי")) < 0.3
+    # ...while a real cross-script duplicate still matches
+    assert score(enrich("טל סנביט"), enrich("Tal Sunbit")) > 0.85
+
+
 def test_nickname_bridge():
     assert score(enrich("דודו"), enrich("דוד")) > 0.8
     assert score(enrich("איתוש"), enrich("איתמר")) > 0.8

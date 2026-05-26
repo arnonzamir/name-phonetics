@@ -1,0 +1,34 @@
+{
+  "_comment": "Place names and organisation names used to keep open-class tokens (Tel Aviv, Makers) out of the person-name bucket. Place names are uncopyrightable facts; this curated list is MIT-clean. To go massive, merge a permissively-licensed source (e.g. GeoNames, CC-BY 4.0) and attribute it. Match is case-insensitive on the whole token or a 2-3 word phrase.",
+  "places": [
+    "israel", "ישראל", "usa", "uk", "england", "france", "germany", "spain",
+    "italy", "canada", "australia", "india", "china", "japan", "brazil",
+    "mexico", "russia", "ukraine", "poland", "netherlands", "belgium",
+    "switzerland", "sweden", "norway", "denmark", "ireland", "portugal",
+    "greece", "turkey", "egypt", "morocco", "argentina", "chile", "colombia",
+    "peru", "cuba", "nigeria", "kenya", "ethiopia", "thailand", "vietnam",
+    "singapore", "korea", "ניגריה", "קובה", "וייטנאם", "מקסיקו", "הודו",
+    "tel aviv", "תל אביב", "תל-אביב", "jerusalem", "ירושלים", "haifa", "חיפה",
+    "beer sheva", "באר שבע", "eilat", "אילת", "netanya", "נתניה", "ashdod",
+    "אשדוד", "ashkelon", "אשקלון", "herzliya", "הרצליה", "ramat gan", "רמת גן",
+    "givatayim", "גבעתיים", "petah tikva", "פתח תקווה", "rishon", "ראשון לציון",
+    "holon", "חולון", "bat yam", "בת ים", "rehovot", "רחובות", "modiin",
+    "מודיעין", "raanana", "רעננה", "kfar saba", "כפר סבא", "hadera", "חדרה",
+    "nahariya", "נהריה", "tiberias", "טבריה", "nazareth", "נצרת", "akko", "עכו",
+    "safed", "צפת", "dimona", "דימונה", "kiryat", "קריית", "carmel", "כרמל",
+    "new york", "nyc", "london", "paris", "berlin", "madrid", "rome", "lisbon",
+    "amsterdam", "vienna", "zurich", "geneva", "munich", "milan", "barcelona",
+    "boston", "chicago", "miami", "austin", "seattle", "denver", "atlanta",
+    "san francisco", "los angeles", "la", "toronto", "vancouver", "montreal",
+    "sydney", "melbourne", "tokyo", "beijing", "shanghai", "mumbai", "delhi",
+    "dubai", "istanbul", "moscow", "calgary", "da nang", "latam", "apec"
+  ],
+  "orgs": [
+    "deloitte", "kpmg", "ey", "pwc", "mckinsey", "bcg", "bain", "accenture",
+    "google", "microsoft", "amazon", "apple", "meta", "facebook", "ibm",
+    "intel", "nvidia", "oracle", "sap", "salesforce", "amdocs", "אמדוקס",
+    "wix", "mobileye", "checkpoint", "nice", "cisco", "dell", "hp", "siemens",
+    "bosch", "aipac", "un", "idf", "aifc", "makers", "makerspace", "מייקרס",
+    "מייקרז", "מייקינג", "xln", "tom", "sugru", "wheelmap", "yoocan"
+  ]
+}

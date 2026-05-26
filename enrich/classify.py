@@ -17,6 +17,7 @@ from .document import EnrichedDoc
 from .normalize import strip_emoji, extract_parens, tokenize
 from .phonetic import phonemize_token
 from .nicknames import canonical
+from .gazetteer import is_place, is_org
 from .lexicons import (
     POSSESSIVE, ROLES, ORG_MARKERS, ORG_MARKERS_MULTI, HEB_YEAR,
 )
@@ -60,6 +61,11 @@ def enrich(raw: str) -> EnrichedDoc:
                 i += span
                 matched = True
                 break
+            if is_place(ph):  # "tel aviv", "new york" -> context, not a name
+                doc.context.append({"text": ph, "kind": "place"})
+                i += span
+                matched = True
+                break
         if matched:
             continue
 
@@ -83,6 +89,16 @@ def enrich(raw: str) -> EnrichedDoc:
             continue
         if tok.isdigit() or tok.startswith(HEB_YEAR):
             doc.dropped.append(tok)
+            i += 1
+            continue
+        if is_place(tok):  # single-token place -> context, not a name
+            doc.context.append({"text": tok, "kind": "place"})
+            i += 1
+            continue
+        if is_org(tok):    # known org/brand -> flip record to org
+            doc.type = "org"
+            mode = "org"
+            doc.orgs.append(phonemize_token(tok))
             i += 1
             continue
 
