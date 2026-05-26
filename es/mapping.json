@@ -1,0 +1,25 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "ipa_tokens": { "type": "custom", "tokenizer": "whitespace", "filter": ["lowercase"] }
+      }
+    }
+  },
+  "mappings": {
+    "_meta": { "purpose": "phonetic entity resolution for Hebrew/English contact names" },
+    "properties": {
+      "raw":        { "type": "text", "fields": { "kw": { "type": "keyword" } } },
+      "type":       { "type": "keyword" },
+      "name_text":  { "type": "text", "analyzer": "standard" },
+      "name_ipa":   { "type": "text", "analyzer": "ipa_tokens" },
+      "name_keys":  { "type": "keyword" },
+      "org_text":   { "type": "text", "analyzer": "standard" },
+      "org_ipa":    { "type": "text", "analyzer": "ipa_tokens" },
+      "roles":      { "type": "keyword" },
+      "anchor_ipa": { "type": "text", "analyzer": "ipa_tokens" },
+      "anchor_keys":{ "type": "keyword" },
+      "context":    { "type": "text" }
+    }
+  }
+}

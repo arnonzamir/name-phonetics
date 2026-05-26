@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "name-phonetics"
+version = "0.1.0"
+description = "Phonetic comparison and entity resolution for Hebrew & English names"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"   # phonikud requires <3.13
+license = { text = "MIT" }
+dependencies = [
+    "panphon>=0.20",
+    "phonikud>=0.4",
+    "phonikud-onnx>=1.0",
+    "huggingface_hub>=0.20",
+    "jellyfish>=1.0",
+]
+
+[project.optional-dependencies]
+service = ["fastapi>=0.110", "uvicorn>=0.27"]
+dev = ["pytest>=8"]
+
+[project.scripts]
+nameph-compare = "cli:main"
+nameph-cluster = "cluster:main"
+
+[tool.setuptools]
+packages = ["engine", "enrich", "match", "es", "data", "service"]
+py-modules = ["cli", "cluster", "eval"]
+
+[tool.setuptools.package-data]
+data = ["*.json", "*.txt"]

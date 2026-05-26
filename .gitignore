@@ -1,0 +1,16 @@
+# virtualenv
+.venv/
+__pycache__/
+*.pyc
+
+# the 307 MB phonikud model (downloaded on first run)
+models/*.onnx
+
+# PRIVATE: real contact data pulled from an Elasticsearch instance — never commit
+data/wa_names.txt
+eval_scores.csv
+
+# build
+*.egg-info/
+dist/
+build/

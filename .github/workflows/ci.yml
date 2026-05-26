@@ -1,0 +1,30 @@
+name: ci
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: System deps (espeak-ng)
+        run: sudo apt-get update && sudo apt-get install -y espeak-ng
+
+      # The 307 MB phonikud ONNX model downloads from HuggingFace on first use.
+      # Cache it so only the first run (or a model bump) pays the download.
+      - name: Cache phonikud model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: phonikud-onnx-1.0.int8
+
+      - name: Install
+        run: pip install -e ".[service,dev]"
+
+      - name: Test
+        run: pytest tests/ -q
