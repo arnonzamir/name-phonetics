@@ -8,6 +8,8 @@ ingest and stores the returned typed doc in Elasticsearch (see es/mapping.json).
 """
 from __future__ import annotations
 
+import re
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 
@@ -27,6 +29,11 @@ class PairIn(BaseModel):
     b: str
 
 
+class CompareManyIn(BaseModel):
+    a: str
+    bs: list[str]
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -43,6 +50,28 @@ def compare(body: PairIn):
     """Phonetic similarity of two raw names (IPA-level)."""
     m = _compare(body.a, body.b)
     return {"ipa_a": m.ipa_a, "ipa_b": m.ipa_b, "score": m.score}
+
+
+_WORD = re.compile(r"[\s,./_|()\-–—]+")
+
+
+def _best_score(a: str, b: str) -> float:
+    """Best phonetic match of query `a` against candidate `b`, scored against the
+    whole name AND each of its word tokens (max). A query that is one word of a
+    multi-word name ("arnon" in "Arnon Zamir", "ארנון טל") then matches strongly
+    instead of being diluted by the other words."""
+    cands = [b]
+    toks = [t for t in _WORD.split(b) if t]
+    if len(toks) > 1:
+        cands.extend(toks)
+    return max(_compare(a, c).score for c in cands)
+
+
+@app.post("/compare_many")
+def compare_many(body: CompareManyIn):
+    """Phonetic similarity of one query name against many candidates, in one
+    call (the search-time name re-rank). `a` is G2P'd once and cached."""
+    return {"scores": [_best_score(body.a, b) for b in body.bs]}
 
 
 @app.post("/score")
