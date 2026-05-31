@@ -98,4 +98,17 @@ PAIRS = [
     ("שרה", "סער", False, "heb"),
     ("דן", "דנה", False, "heb"),
     ("רון", "רוני", False, "heb"),
+
+    # ---- the "arnon" r-n family: live collisions from WaSearch ----
+    # True: the same name across scripts must still match.
+    ("ארנון", "Arnon", True, "cross"),
+    ("אורן", "Oren", True, "cross"),
+    # False: different people the vowel-cheap skeleton merged into "rn".
+    ("Arnon", "Oren", False, "en"),
+    ("ארנון", "אורן", False, "heb"),
+    ("Arnon", "Roni", False, "translit"),
+    ("Arnon", "Aharon", False, "translit"),
+    ("Arnon", "Raanan", False, "translit"),
+    ("ארנון", "רינה", False, "cross"),
+    ("ארנון", "רוני", False, "cross"),
 ]

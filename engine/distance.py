@@ -54,8 +54,25 @@ W_CONS = 1.0
 W_GLOTTAL = 0.35   # א/ע/h: often silent or inserted
 W_VOWEL = 0.25
 
-VOWEL_SUB = 0.40        # cap on vowel<->vowel substitution cost
+VOWEL_SUB = 0.40        # cap on vowel<->vowel substitution cost (SAME round-class)
 CONS_SUB_FLOOR = 0.60   # floor on distinct non-equivalent consonant subs
+
+# Rounded / back vowels. A name's O/U anchor (חולם/שורוק, English o/u) is
+# identity-bearing — "Arnon" vs "Oren", "Tamar" vs "Tomer" hinge on it — so an
+# O/U <-> A/E/I flip must NOT be cheap like a generic vowel drift.
+ROUND_VOWELS = set("ouɔʊoʊøœuː")
+VOWEL_ROUND_FLOOR = 0.55  # floor on a rounded<->unrounded vowel sub (uncapped)
+W_VOWEL_ROUND = 0.60      # weight of a round-flip vowel sub (vs W_VOWEL=0.25)
+
+# Multiplicative similarity adjustments layered on top of the alignment score:
+#  (1) FIRST-SOUND family — humans key on the initial sound. If the first
+#      (non-glottal) segments aren't the same family, kill the match hard.
+#  (3) SYLLABLE LENGTH — a long name squished onto a short one (Ra-a-nan vs
+#      Ar-non) should not pass; penalize a vowel-count gap > 1.
+W_FIRST_VOWEL = 0.70     # both vowels but rounded-vs-unrounded (Arnon a- vs Oren o-)
+W_FIRST_CROSS = 0.85     # vowel onset vs consonant onset (gentle: ח/yod drop a lot)
+W_FIRST_CONS = 0.85      # distinct, non-equivalent initial consonants
+SYLLABLE_STEP = 0.20     # penalty per syllable of gap beyond the first
 
 
 def _weight(seg: str) -> float:
@@ -88,6 +105,11 @@ def _feature_dist(a: str, b: str) -> float:
         return 1.0  # unknown symbol -> full mismatch
     diff = sum(abs(x - y) for x, y in zip(va, vb)) / (2.0 * _NFEAT)
     if a in VOWELS and b in VOWELS:
+        # A rounded/back <-> unrounded flip (o/u <-> a/e/i) is an identity
+        # signal, not free drift — floor it and don't cap. Same round-class
+        # vowels still drift cheaply.
+        if (a in ROUND_VOWELS) != (b in ROUND_VOWELS):
+            return max(diff, VOWEL_ROUND_FLOOR)
         return min(diff, VOWEL_SUB)
     # two distinct, non-equivalent consonants = a real identity difference,
     # even when they share most articulatory features (v/n, d/l, ...).
@@ -103,7 +125,12 @@ def sub_cost(a: str, b: str) -> float:
     a vowel cannot cheaply absorb a consonant."""
     fd = _feature_dist(a, b)
     av, bv = a in VOWELS, b in VOWELS
-    w = max(_weight(a), _weight(b)) if (av != bv) else (_weight(a) + _weight(b)) / 2
+    if av and bv and (a in ROUND_VOWELS) != (b in ROUND_VOWELS):
+        w = W_VOWEL_ROUND  # round-flip counts far more than a generic vowel drift
+    elif av != bv:
+        w = max(_weight(a), _weight(b))
+    else:
+        w = (_weight(a) + _weight(b)) / 2
     return fd * w
 
 
@@ -138,10 +165,67 @@ def align_cost(ipa_a: str, ipa_b: str):
     return d[n][m], norm
 
 
+def _sound_family(seg: str) -> str:
+    """Coarse family of a segment for the first-sound gate: a rounded vowel, an
+    unrounded vowel, or a consonant equivalence class."""
+    if seg in VOWELS:
+        return "V_round" if seg in ROUND_VOWELS else "V_open"
+    canon = next(iter(_EQUIV_INDEX.get(seg, {seg})))  # any class member as the key
+    return f"C:{_CANON.get(seg, canon)}"
+
+
+def _first_seg(segs: list[str]) -> str | None:
+    """First non-glottal segment (א/ע/h are routinely silent or inserted)."""
+    for s in segs:
+        if s not in GLOTTAL:
+            return s
+    return None
+
+
+def _first_sound_factor(A: list[str], B: list[str]) -> float:
+    """Penalize when the two names don't begin with the same sound family.
+    Respects the equivalence table, so systematic onset swaps (ח↔h↔k, yod↔i)
+    are NOT penalized — only genuinely different onsets are."""
+    a, b = _first_seg(A), _first_seg(B)
+    if a is None or b is None or a == b or _equiv(a, b):
+        return 1.0
+    fa, fb = _sound_family(a), _sound_family(b)
+    if fa == fb:
+        return 1.0
+    av, bv = fa.startswith("V"), fb.startswith("V")
+    if av and bv:
+        return W_FIRST_VOWEL   # rounded vs unrounded onset (Arnon a- vs Oren o-)
+    if av != bv:
+        return W_FIRST_CROSS   # vowel onset vs consonant onset
+    return W_FIRST_CONS        # two distinct initial consonants
+
+
+def _syllables(segs: list[str]) -> int:
+    """Count vowel GROUPS (a run of vowels = one syllable), so a diphthong like
+    oʊ/eɪ counts once rather than inflating the length."""
+    n, prev_v = 0, False
+    for s in segs:
+        v = s in VOWELS
+        if v and not prev_v:
+            n += 1
+        prev_v = v
+    return n
+
+
+def _length_factor(A: list[str], B: list[str]) -> float:
+    """Penalize a syllable gap beyond one — a long name squished onto a short
+    cluster (Ra-a-nan vs Ar-non) shouldn't pass."""
+    gap = abs(_syllables(A) - _syllables(B))
+    return 1.0 if gap <= 1 else max(0.4, 1.0 - SYLLABLE_STEP * (gap - 1))
+
+
 def similarity(ipa_a: str, ipa_b: str) -> float:
-    """0..1 phonetic similarity (1 = identical phoneme sequence)."""
+    """0..1 phonetic similarity (1 = identical phoneme sequence). The alignment
+    score is then gated by first-sound family (1) and syllable length (3)."""
     cost, norm = align_cost(ipa_a, ipa_b)
-    return max(0.0, 1.0 - cost / norm)
+    sim = max(0.0, 1.0 - cost / norm)
+    A, B = _segments(ipa_a), _segments(ipa_b)
+    return sim * _first_sound_factor(A, B) * _length_factor(A, B)
 
 
 # --- coarse phonetic key (for cheap cross-script blocking in ES) ------------
