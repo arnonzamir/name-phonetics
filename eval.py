@@ -18,7 +18,7 @@ import sys
 import jellyfish
 
 sys.path.insert(0, os.path.dirname(__file__))
-from engine import to_ipa, detect_lang, similarity  # noqa: E402
+from engine import ipa_pair, similarity  # noqa: E402
 from data.testcases import PAIRS  # noqa: E402
 
 
@@ -32,7 +32,7 @@ def lev_sim(a: str, b: str) -> float:
 def score_all():
     rows = []
     for a, b, label, cat in PAIRS:
-        ia, ib = to_ipa(a, detect_lang(a)), to_ipa(b, detect_lang(b))
+        ia, ib = ipa_pair(a, b)  # cross-script romanization applied (the real path)
         rows.append({
             "a": a, "b": b, "label": label, "cat": cat,
             "ipa_a": ia, "ipa_b": ib,

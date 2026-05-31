@@ -67,6 +67,46 @@ def detect_lang(text: str) -> str:
     return "he" if HEB_RANGE.search(text) else "en"
 
 
+# --- spelling-faithful romanization (for transliterated, non-English names) ---
+# espeak reads a Latin string as ENGLISH: it reduces unstressed vowels and applies
+# English spelling rules, so a transliterated Hebrew name diverges from its Hebrew
+# G2P ("Aharon" -> æhærən, the O lost; "אהרון" -> ʔaharon). For a CROSS-SCRIPT
+# comparison the Latin side is almost always a transliteration, so we instead map
+# letters to their CARDINAL sounds — vowels preserved — using the common
+# Hebrew-transliteration digraphs. This makes the same name converge across scripts.
+_ROMAN_DIGRAPHS = [
+    ("sch", "ʃ"), ("tch", "tʃ"),
+    ("sh", "ʃ"), ("ch", "x"), ("kh", "x"), ("ph", "f"), ("th", "t"), ("zh", "ʒ"),
+    ("tz", "ts"), ("ts", "ts"), ("ck", "k"), ("ng", "nɡ"),
+    ("aa", "a"), ("ee", "i"), ("oo", "u"), ("ou", "u"),
+    ("ai", "aj"), ("ay", "aj"), ("ei", "ej"), ("ey", "ej"), ("oy", "oj"), ("oi", "oj"),
+]
+_ROMAN_SINGLE = {
+    "a": "a", "e": "e", "i": "i", "o": "o", "u": "u", "y": "j",
+    "b": "b", "c": "k", "d": "d", "f": "f", "g": "ɡ", "h": "h", "j": "j",
+    "k": "k", "l": "l", "m": "m", "n": "n", "p": "p", "q": "k", "r": "r",
+    "s": "s", "t": "t", "v": "v", "w": "v", "x": "ks", "z": "z",
+    "'": "ʔ", "’": "ʔ", "`": "ʔ",
+}
+
+
+def romanize_ipa(text: str) -> str:
+    """Cardinal, vowel-preserving Latin→IPA for a transliterated name."""
+    s = text.lower()
+    out: list[str] = []
+    i, n = 0, len(s)
+    while i < n:
+        for dg, ipa in _ROMAN_DIGRAPHS:
+            if s.startswith(dg, i):
+                out.append(ipa)
+                i += len(dg)
+                break
+        else:
+            out.append(_ROMAN_SINGLE.get(s[i], ""))  # skip spaces/digits/punct
+            i += 1
+    return normalize_ipa("".join(out))
+
+
 class _Phonikud:
     """Lazy holder for the 307 MB ONNX niqqud model + phonemizer."""
     _model = None

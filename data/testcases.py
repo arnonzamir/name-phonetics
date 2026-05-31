@@ -100,14 +100,17 @@ PAIRS = [
     ("רון", "רוני", False, "heb"),
 
     # ---- the "arnon" r-n family: live collisions from WaSearch ----
-    # True: the same name across scripts must still match.
+    # True: the same name across scripts must still match — incl. the ones whose
+    # English G2P used to drift (Aharon/Yaakov), which the romanizer should fix.
     ("ארנון", "Arnon", True, "cross"),
     ("אורן", "Oren", True, "cross"),
+    ("אהרון", "Aharon", True, "cross"),  # English G2P used to drift; romanizer fixes
     # False: different people the vowel-cheap skeleton merged into "rn".
     ("Arnon", "Oren", False, "en"),
     ("ארנון", "אורן", False, "heb"),
     ("Arnon", "Roni", False, "translit"),
     ("Arnon", "Aharon", False, "translit"),
+    ("ארנון", "Aharon", False, "cross"),
     ("Arnon", "Raanan", False, "translit"),
     ("ארנון", "רינה", False, "cross"),
     ("ארנון", "רוני", False, "cross"),
